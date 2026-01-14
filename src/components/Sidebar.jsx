@@ -3,7 +3,7 @@ import React from 'react';
     import { cn } from '@/lib/utils.jsx';
     import { Button } from '@/components/ui/button.jsx';
     import { Card, CardContent } from '@/components/ui/card.jsx';
-    import { LayoutDashboard, Briefcase, Map, FileText, Users, ShieldCheck, Package, Truck, Coins, UserCheck, Settings, Brain, UserCog, DollarSign, ClipboardCheck, HardHat, FileSignature, GanttChartSquare, MessageCircle, Users2, Link as LinkIcon, FileUp, ListChecks, Building, BarChart3, GitPullRequestClosed, CheckSquare as QualityCheckSquare, Construction, Clock4, CalendarCheck, Award } from 'lucide-react';
+    import { LayoutDashboard, Briefcase, Map, FileText, Users, ShieldCheck, Package, Truck, Coins, UserCheck, Settings, Brain, UserCog, DollarSign, ClipboardCheck, HardHat, FileSignature, GanttChartSquare, MessageCircle, Users2, Link as LinkIcon, FileUp, ListChecks, BarChart3, GitPullRequestClosed, CheckSquare as QualityCheckSquare, Construction, Clock4, CalendarCheck, Award } from 'lucide-react';
     import { motion } from 'framer-motion';
 
     const mainNavItems = [
@@ -57,7 +57,6 @@ import React from 'react';
         items: [
           { href: '/stakeholder-dashboard', label: 'Stakeholders Hub', icon: Coins },
           { href: '/stakeholder-contractor-registration', label: 'Contractor Mgt.', icon: UserCheck },
-          { href: '/stakeholder-supplier-portal', label: 'Supplier Portal', icon: Building },
           { href: '/legal-agreements', label: 'MOU/NCNDA/Agreements', icon: FileSignature },
         ],
       },

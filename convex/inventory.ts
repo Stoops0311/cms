@@ -389,6 +389,182 @@ export const getLowStockItems = query({
   },
 });
 
+// List inventory requests
+export const listInventoryRequests = query({
+  args: {
+    status: v.optional(v.string()),
+    requestingUnit: v.optional(v.string()),
+  },
+  returns: v.array(
+    v.object({
+      _id: v.id("inventoryRequests"),
+      requestingUnit: v.string(),
+      requestedBy: v.id("users"),
+      requestedByName: v.string(),
+      items: v.array(
+        v.object({
+          itemId: v.id("inventory"),
+          itemName: v.string(),
+          quantityRequested: v.number(),
+          unitOfMeasure: v.string(),
+        })
+      ),
+      status: v.string(),
+      notes: v.string(),
+      approvedBy: v.optional(v.id("users")),
+      approvedByName: v.optional(v.string()),
+      fulfilledBy: v.optional(v.id("users")),
+      fulfilledByName: v.optional(v.string()),
+      _creationTime: v.number(),
+    })
+  ),
+  handler: async (ctx, args) => {
+    let requests;
+
+    if (args.status) {
+      requests = await ctx.db
+        .query("inventoryRequests")
+        .filter((q) => q.eq(q.field("status"), args.status))
+        .order("desc")
+        .collect();
+    } else {
+      requests = await ctx.db
+        .query("inventoryRequests")
+        .order("desc")
+        .collect();
+    }
+
+    if (args.requestingUnit) {
+      requests = requests.filter(r => r.requestingUnit === args.requestingUnit);
+    }
+
+    const requestsWithDetails = await Promise.all(
+      requests.map(async (request) => {
+        const requestedByUser = await ctx.db.get(request.requestedBy);
+        const approvedByUser = request.approvedBy ? await ctx.db.get(request.approvedBy) : null;
+        const fulfilledByUser = request.fulfilledBy ? await ctx.db.get(request.fulfilledBy) : null;
+
+        const itemsWithNames = await Promise.all(
+          request.items.map(async (item) => {
+            const inventoryItem = await ctx.db.get(item.itemId);
+            return {
+              ...item,
+              itemName: inventoryItem?.name || "Unknown Item",
+            };
+          })
+        );
+
+        return {
+          _id: request._id,
+          requestingUnit: request.requestingUnit,
+          requestedBy: request.requestedBy,
+          requestedByName: requestedByUser?.fullName || "Unknown User",
+          items: itemsWithNames,
+          status: request.status,
+          notes: request.notes,
+          approvedBy: request.approvedBy,
+          approvedByName: approvedByUser?.fullName,
+          fulfilledBy: request.fulfilledBy,
+          fulfilledByName: fulfilledByUser?.fullName,
+          _creationTime: request._creationTime,
+        };
+      })
+    );
+
+    return requestsWithDetails;
+  },
+});
+
+// Reject inventory request
+export const rejectInventoryRequest = mutation({
+  args: {
+    requestId: v.id("inventoryRequests"),
+    rejectedBy: v.id("users"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const request = await ctx.db.get(args.requestId);
+    if (!request) {
+      throw new Error("Request not found");
+    }
+
+    if (request.status !== "Pending") {
+      throw new Error(`Request is already ${request.status}`);
+    }
+
+    await ctx.db.patch(args.requestId, {
+      status: "Rejected",
+    });
+
+    return null;
+  },
+});
+
+// Delete inventory item
+export const deleteInventoryItem = mutation({
+  args: {
+    itemId: v.id("inventory"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.itemId);
+    return null;
+  },
+});
+
+// Get inventory stats
+export const getInventoryStats = query({
+  args: {},
+  returns: v.object({
+    totalItems: v.number(),
+    lowStockCount: v.number(),
+    expiringSoonCount: v.number(),
+    totalValue: v.number(),
+    locationCounts: v.array(v.object({
+      location: v.string(),
+      count: v.number(),
+    })),
+  }),
+  handler: async (ctx) => {
+    const items = await ctx.db.query("inventory").collect();
+
+    const now = new Date();
+    const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+    const lowStockCount = items.filter(item => item.quantity <= item.lowStockThreshold).length;
+    const expiringSoonCount = items.filter(item =>
+      item.expiryDate && new Date(item.expiryDate) <= thirtyDaysFromNow
+    ).length;
+
+    const locationMap = new Map<string, number>();
+    items.forEach(item => {
+      locationMap.set(item.location, (locationMap.get(item.location) || 0) + 1);
+    });
+
+    return {
+      totalItems: items.length,
+      lowStockCount,
+      expiringSoonCount,
+      totalValue: 0, // Would need price field to calculate
+      locationCounts: Array.from(locationMap.entries()).map(([location, count]) => ({
+        location,
+        count,
+      })),
+    };
+  },
+});
+
+// Get unique locations from inventory
+export const getUniqueLocations = query({
+  args: {},
+  returns: v.array(v.string()),
+  handler: async (ctx) => {
+    const items = await ctx.db.query("inventory").collect();
+    const locations = [...new Set(items.map(item => item.location).filter(Boolean))];
+    return locations.sort();
+  },
+});
+
 // List inventory items
 export const listInventoryItems = query({
   args: {

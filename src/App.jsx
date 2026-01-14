@@ -24,6 +24,24 @@ import React from 'react';
     import GenericFormPage from '@/pages/formsHub/GenericFormPage.jsx';
     import AutoIdCardGeneratorPage from '@/pages/formsHub/AutoIdCardGeneratorPage.jsx';
 
+    // New form pages
+    import TrainingRequestFormPage from '@/pages/formsHub/TrainingRequestFormPage.jsx';
+    import LeaveRequestFormPage from '@/pages/formsHub/LeaveRequestFormPage.jsx';
+    import IncidentReportFormPage from '@/pages/formsHub/IncidentReportFormPage.jsx';
+    import TimesheetSubmissionFormPage from '@/pages/formsHub/TimesheetSubmissionFormPage.jsx';
+    import InventoryTransferFormPage from '@/pages/formsHub/InventoryTransferFormPage.jsx';
+    import DPRSubmissionFormPage from '@/pages/formsHub/DPRSubmissionFormPage.jsx';
+    import BudgetRevisionRequestPage from '@/pages/formsHub/BudgetRevisionRequestPage.jsx';
+    import VendorPaymentCertificatePage from '@/pages/formsHub/VendorPaymentCertificatePage.jsx';
+    import VendorCompletionCertificatePage from '@/pages/formsHub/VendorCompletionCertificatePage.jsx';
+    import InvoiceSubmissionFormPage from '@/pages/formsHub/InvoiceSubmissionFormPage.jsx';
+    import MedicalInsuranceUploadPage from '@/pages/formsHub/MedicalInsuranceUploadPage.jsx';
+    import StaffExitClearanceFormPage from '@/pages/formsHub/StaffExitClearanceFormPage.jsx';
+    import MedicalPrescriptionUploadPage from '@/pages/formsHub/MedicalPrescriptionUploadPage.jsx';
+    import EngineerSketchUploadPage from '@/pages/formsHub/EngineerSketchUploadPage.jsx';
+    import MaterialReceivingReportPage from '@/pages/formsHub/MaterialReceivingReportPage.jsx';
+    import PnLSheetPage from '@/pages/formsHub/PnLSheetPage.jsx';
+
 
     import HRDashboard from '@/pages/HRDashboard.jsx';
     import AttendanceApp from '@/pages/AttendanceApp.jsx';
@@ -90,31 +108,43 @@ import React from 'react';
               <Route path="forms/expense-claim" element={<ExpenseClaimFormPage />} />
               <Route path="forms/contract-variation" element={<ContractVariationRequestPage />} />
               
-              {/* Generic Placeholder Routes for Forms Hub */}
-              <Route path="forms/inventory-transfer" element={<GenericFormPage />} />
-              <Route path="forms/leave-request" element={<GenericFormPage />} />
-              <Route path="forms/incident-report" element={<GenericFormPage />} />
+              {/* Internal Operations Forms */}
+              <Route path="forms/inventory-transfer" element={<InventoryTransferFormPage />} />
+              <Route path="forms/leave-request" element={<LeaveRequestFormPage />} />
+              <Route path="forms/incident-report" element={<IncidentReportFormPage />} />
+              <Route path="forms/timesheet-submission" element={<TimesheetSubmissionFormPage />} />
+              <Route path="forms/dpr-submission" element={<DPRSubmissionFormPage />} />
+
+              {/* Training Request Forms - all use same component */}
+              <Route path="forms/training-request" element={<TrainingRequestFormPage />} />
+              <Route path="forms/fiber-training-request" element={<TrainingRequestFormPage />} />
+              <Route path="forms/eng-training-request" element={<TrainingRequestFormPage />} />
+              <Route path="forms/telecom-training-request" element={<TrainingRequestFormPage />} />
+              <Route path="forms/civil-eng-training-request" element={<TrainingRequestFormPage />} />
+
+              {/* Site Document Forms */}
+              <Route path="forms/medical-prescription-upload" element={<MedicalPrescriptionUploadPage />} />
+              <Route path="forms/engineer-sketch-upload" element={<EngineerSketchUploadPage />} />
+              <Route path="forms/material-receiving-report" element={<MaterialReceivingReportPage />} />
+
+              {/* Financial Forms */}
+              <Route path="forms/pnl-sheet" element={<PnLSheetPage />} />
+              <Route path="forms/budget-revision" element={<BudgetRevisionRequestPage />} />
+              <Route path="forms/vendor-payment" element={<VendorPaymentCertificatePage />} />
+              <Route path="forms/vendor-completion" element={<VendorCompletionCertificatePage />} />
+              <Route path="forms/invoice-submission" element={<InvoiceSubmissionFormPage />} />
+
+              {/* HR Forms */}
+              <Route path="forms/medical-insurance-upload" element={<MedicalInsuranceUploadPage />} />
+              <Route path="forms/id-card-generator" element={<AutoIdCardGeneratorPage />} />
+              <Route path="forms/staff-exit-clearance" element={<StaffExitClearanceFormPage />} />
+
+              {/* AI Features - Keep as placeholders */}
               <Route path="forms/ai-risk-assessment" element={<GenericFormPage />} />
               <Route path="forms/ocr-note-form" element={<GenericFormPage />} />
-              <Route path="forms/medical-prescription-upload" element={<GenericFormPage />} />
-              <Route path="forms/engineer-sketch-upload" element={<GenericFormPage />} />
-              <Route path="forms/material-receiving-report" element={<GenericFormPage />} />
               <Route path="forms/ai-cash-flow" element={<GenericFormPage />} />
-              <Route path="forms/pnl-sheet" element={<GenericFormPage />} />
-              <Route path="forms/budget-revision" element={<GenericFormPage />} />
-              <Route path="forms/vendor-payment" element={<GenericFormPage />} />
-              <Route path="forms/vendor-completion" element={<GenericFormPage />} />
-              <Route path="forms/invoice-submission" element={<GenericFormPage />} />
-              <Route path="forms/medical-insurance-upload" element={<GenericFormPage />} />
-              <Route path="forms/id-card-generator" element={<AutoIdCardGeneratorPage />} />
-              <Route path="forms/staff-exit-clearance" element={<GenericFormPage />} />
-              <Route path="forms/timesheet-submission" element={<GenericFormPage />} />
-              <Route path="forms/dpr-submission" element={<GenericFormPage />} />
-              <Route path="forms/training-request" element={<GenericFormPage />} />
-              <Route path="forms/fiber-training-request" element={<GenericFormPage />} />
-              <Route path="forms/eng-training-request" element={<GenericFormPage />} />
-              <Route path="forms/telecom-training-request" element={<GenericFormPage />} />
-              <Route path="forms/civil-eng-training-request" element={<GenericFormPage />} />
+
+              {/* Generic fallback */}
               <Route path="forms/placeholder/:formId" element={<GenericFormPage />} />
 
 

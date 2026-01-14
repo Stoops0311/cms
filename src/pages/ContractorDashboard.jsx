@@ -1,24 +1,67 @@
-import React from 'react';
+import React, { useMemo } from 'react';
     import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.jsx';
-    import { Briefcase, CheckSquare, DollarSign, AlertTriangle } from 'lucide-react';
+    import { Briefcase, CheckSquare, DollarSign, AlertTriangle, Loader2, FileCheck, Award } from 'lucide-react';
     import { motion } from 'framer-motion';
     import { Button } from '@/components/ui/button.jsx';
     import { Link } from 'react-router-dom';
+    import { useQuery } from 'convex/react';
+    import { api } from '../../convex/_generated/api';
 
     const ContractorDashboard = () => {
-      // Mock data - replace with actual data for the logged-in contractor
-      const assignedProjects = [
-        { id: "proj1", name: "Downtown Tower - Phase 2", status: "In Progress", nextMilestone: "Facade Installation" },
-        { id: "proj2", name: "West Bridge Repair", status: "Pending Approval", nextMilestone: "Material Procurement" },
-      ];
-      const pendingApprovals = [
-        { id: "app1", type: "Variation Order", project: "Downtown Tower - Phase 2", submitted: "2025-05-15" },
-        { id: "app2", type: "Work Completion Certificate", project: "Old Warehouse Demolition", submitted: "2025-05-12" },
-      ];
-      const paymentStatus = [
-        { id: "pay1", invoice: "INV-00123", project: "Downtown Tower - Phase 2", amount: "50,000 SAR", status: "Paid" },
-        { id: "pay2", invoice: "INV-00125", project: "West Bridge Repair", amount: "25,000 SAR", status: "Pending" },
-      ];
+      // Convex queries for real data
+      const vendorCompletions = useQuery(api.vendorCompletions.listVendorCompletions, {});
+      const vendorPayments = useQuery(api.vendorPayments.listVendorPayments, {});
+      const projects = useQuery(api.projects.listProjects, {});
+      const contractors = useQuery(api.contractors.listContractors, {});
+
+      // Get project IDs for milestone query
+      const projectIds = useMemo(() => {
+        return projects?.slice(0, 3).map(p => p._id) || [];
+      }, [projects]);
+
+      // Fetch next milestones for the displayed projects
+      const milestonesData = useQuery(
+        api.projects.getProjectsNextMilestones,
+        projectIds.length > 0 ? { projectIds } : "skip"
+      );
+
+      const isLoading = vendorCompletions === undefined || vendorPayments === undefined;
+
+      // Build assigned projects with real milestone data
+      const assignedProjects = useMemo(() => {
+        if (!projects) return [];
+
+        const milestonesMap = new Map();
+        if (milestonesData) {
+          milestonesData.forEach(m => {
+            milestonesMap.set(m.projectId, m.nextMilestone);
+          });
+        }
+
+        return projects.slice(0, 3).map(p => ({
+          id: p._id,
+          name: p.projectName,
+          status: p.status,
+          nextMilestone: milestonesMap.get(p._id) || "No upcoming milestones"
+        }));
+      }, [projects, milestonesData]);
+
+      // Real pending approvals from completion certificates
+      const pendingApprovals = vendorCompletions?.filter(vc => vc.status === 'Pending Review').map(vc => ({
+        id: vc._id,
+        type: "Work Completion Certificate",
+        project: vc.projectName,
+        submitted: vc._creationTime ? new Date(vc._creationTime).toLocaleDateString() : 'N/A',
+      })) || [];
+
+      // Real payment status from vendor payments
+      const paymentStatus = vendorPayments?.map(vp => ({
+        id: vp._id,
+        invoice: vp.certificateNumber,
+        project: vp.projectName,
+        amount: `${vp.netPayable?.toLocaleString()} SAR`,
+        status: vp.status
+      })) || [];
 
       return (
         <motion.div 
@@ -37,16 +80,22 @@ import React from 'react';
               </CardDescription>
             </CardHeader>
              <CardContent>
-                <div className="mt-2 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 rounded-md flex items-start">
+                <div className="mt-2 p-4 bg-blue-100 border-l-4 border-blue-500 text-blue-700 rounded-md flex items-start">
                   <AlertTriangle className="h-5 w-5 mr-3 mt-1 flex-shrink-0" />
                   <div>
-                    <p className="font-semibold">Personalized View (Mock Data):</p>
-                    <p className="text-sm">This dashboard will be personalized for each logged-in contractor. The data shown is for demonstration purposes.</p>
+                    <p className="font-semibold">Personalized View:</p>
+                    <p className="text-sm">This dashboard shows vendor completion certificates and payment status from the database.</p>
                   </div>
                 </div>
             </CardContent>
           </Card>
 
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+              <span className="ml-2 text-muted-foreground">Loading contractor data...</span>
+            </div>
+          ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Assigned Projects */}
             <Card className="lg:col-span-1">
@@ -97,6 +146,54 @@ import React from 'react';
               </CardContent>
             </Card>
           </div>
+          )}
+
+          {/* Vendor Completion Certificates Section */}
+          {!isLoading && (
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Award className="mr-2 h-5 w-5 text-purple-600" />
+                  Completion Certificates
+                </CardTitle>
+                <CardDescription>Work completion certificates submitted for review</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {vendorCompletions && vendorCompletions.length > 0 ? (
+                  <div className="space-y-3 max-h-60 overflow-y-auto">
+                    {vendorCompletions.map(vc => (
+                      <div key={vc._id} className="p-3 rounded-lg border bg-white shadow-sm">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-medium">{vc.certificateNumber}</p>
+                            <p className="text-sm text-muted-foreground">{vc.workDescription}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Project: {vc.projectName} | Completed: {vc.completionDate}
+                            </p>
+                            {vc.qualityRating && (
+                              <p className="text-xs text-muted-foreground">Quality: {vc.qualityRating}</p>
+                            )}
+                          </div>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${
+                            vc.status === 'Approved' ? 'bg-green-100 text-green-800' :
+                            vc.status === 'Rejected' ? 'bg-red-100 text-red-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {vc.status}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground py-4">
+                    <FileCheck className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                    No completion certificates submitted yet.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </motion.div>
       );
     };

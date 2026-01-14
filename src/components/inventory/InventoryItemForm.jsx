@@ -9,14 +9,14 @@ import React, { useState, useEffect } from 'react';
     import { format, parseISO } from 'date-fns';
     import { useToast } from '@/components/ui/use-toast.jsx';
 
-    const InventoryItemForm = ({ initialData, onSave, onCancel, mockLocations }) => {
+    const InventoryItemForm = ({ initialData, onSave, onCancel, locations }) => {
       const { toast } = useToast();
       const [itemName, setItemName] = useState('');
       const [quantity, setQuantity] = useState('');
       const [batchNo, setBatchNo] = useState('');
       const [expiryDate, setExpiryDate] = useState(null);
       const [lowStockThreshold, setLowStockThreshold] = useState('10');
-      const [location, setLocation] = useState(mockLocations && mockLocations.length > 0 ? mockLocations[0] : '');
+      const [location, setLocation] = useState(locations && locations.length > 0 ? locations[0] : '');
 
       useEffect(() => {
         if (initialData) {
@@ -25,11 +25,11 @@ import React, { useState, useEffect } from 'react';
           setBatchNo(initialData.batchNo);
           setExpiryDate(initialData.expiryDate ? parseISO(initialData.expiryDate) : null);
           setLowStockThreshold(initialData.lowStockThreshold.toString());
-          setLocation(initialData.location || (mockLocations && mockLocations.length > 0 ? mockLocations[0] : ''));
+          setLocation(initialData.location || (locations && locations.length > 0 ? locations[0] : ''));
         } else {
             resetForm();
         }
-      }, [initialData, mockLocations]);
+      }, [initialData, locations]);
 
       const resetForm = () => {
         setItemName('');
@@ -37,7 +37,7 @@ import React, { useState, useEffect } from 'react';
         setBatchNo('');
         setExpiryDate(null);
         setLowStockThreshold('10');
-        setLocation(mockLocations && mockLocations.length > 0 ? mockLocations[0] : '');
+        setLocation(locations && locations.length > 0 ? locations[0] : '');
         if (onCancel) onCancel(); 
       };
 
@@ -100,7 +100,7 @@ import React, { useState, useEffect } from 'react';
                             <SelectValue placeholder="Select location" />
                         </SelectTrigger>
                         <SelectContent>
-                            {mockLocations && mockLocations.map(loc => (
+                            {locations && locations.map(loc => (
                                 <SelectItem key={loc} value={loc}>{loc}</SelectItem>
                             ))}
                         </SelectContent>

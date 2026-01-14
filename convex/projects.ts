@@ -407,3 +407,71 @@ export const getProjectDashboardStats = query({
     };
   },
 });
+
+// Get next milestone for a project (first non-completed milestone by due date)
+export const getNextMilestone = query({
+  args: { projectId: v.id("projects") },
+  returns: v.union(
+    v.object({
+      _id: v.id("projectMilestones"),
+      title: v.string(),
+      dueDate: v.string(),
+      status: v.string(),
+    }),
+    v.null()
+  ),
+  handler: async (ctx, args) => {
+    // Get all non-completed milestones for this project, ordered by due date
+    const milestones = await ctx.db
+      .query("projectMilestones")
+      .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
+      .collect();
+
+    // Filter to non-completed and sort by due date
+    const pendingMilestones = milestones
+      .filter(m => m.status !== "Completed")
+      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+
+    if (pendingMilestones.length === 0) {
+      return null;
+    }
+
+    const next = pendingMilestones[0];
+    return {
+      _id: next._id,
+      title: next.title,
+      dueDate: next.dueDate,
+      status: next.status,
+    };
+  },
+});
+
+// Get next milestones for multiple projects (batch query for dashboard)
+export const getProjectsNextMilestones = query({
+  args: { projectIds: v.array(v.id("projects")) },
+  returns: v.array(v.object({
+    projectId: v.id("projects"),
+    nextMilestone: v.union(v.string(), v.null()),
+  })),
+  handler: async (ctx, args) => {
+    const results = await Promise.all(
+      args.projectIds.map(async (projectId) => {
+        const milestones = await ctx.db
+          .query("projectMilestones")
+          .withIndex("by_project", (q) => q.eq("projectId", projectId))
+          .collect();
+
+        const pendingMilestones = milestones
+          .filter(m => m.status !== "Completed")
+          .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+
+        return {
+          projectId,
+          nextMilestone: pendingMilestones.length > 0 ? pendingMilestones[0].title : null,
+        };
+      })
+    );
+
+    return results;
+  },
+});
